@@ -22,6 +22,8 @@ public class OrderService {
 
     public static final String ORDER_CACHE = "orders-by-id";
     public static final String ORDER_LIST_CACHE = "orders-list";
+    public static final String ORDER_CACHE_V2 = "orders-by-id-v2";
+    public static final String ORDER_LIST_CACHE_V2 = "orders-list-v2";
     private static final String ORDER_LOOKUP_TIMER = "orders.lookup.duration";
 
     private final OrderRepository orderRepository;
@@ -39,7 +41,7 @@ public class OrderService {
     }
 
     @Transactional
-    @CacheEvict(cacheNames = {ORDER_CACHE, ORDER_LIST_CACHE}, allEntries = true)
+    @CacheEvict(cacheNames = {ORDER_CACHE_V2, ORDER_LIST_CACHE_V2}, allEntries = true)
     public OrderResponse createOrder(OrderRequest request) {
         OrderEntity order = orderMapper.toEntity(request);
         order.recalculateTotals();
@@ -49,7 +51,7 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(cacheNames = ORDER_LIST_CACHE)
+    @Cacheable(cacheNames = ORDER_LIST_CACHE_V2)
     public List<OrderResponse> getAllOrders() {
         return orderRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
                 .map(orderMapper::toResponse)
@@ -57,7 +59,7 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(cacheNames = ORDER_CACHE, key = "#id")
+    @Cacheable(cacheNames = ORDER_CACHE_V2, key = "#id")
     public OrderResponse getOrderById(UUID id) {
         orderMetrics.incrementLookup();
         return orderMetrics.recordLookup(orderLookupTimer, () -> {
@@ -67,7 +69,7 @@ public class OrderService {
     }
 
     @Transactional
-    @CacheEvict(cacheNames = {ORDER_CACHE, ORDER_LIST_CACHE}, allEntries = true)
+    @CacheEvict(cacheNames = {ORDER_CACHE_V2, ORDER_LIST_CACHE_V2}, allEntries = true)
     public OrderResponse updateOrder(UUID id, OrderRequest request) {
         OrderEntity order = findOrderById(id);
         orderMapper.updateEntity(order, request);
@@ -78,7 +80,7 @@ public class OrderService {
     }
 
     @Transactional
-    @CacheEvict(cacheNames = {ORDER_CACHE, ORDER_LIST_CACHE}, allEntries = true)
+    @CacheEvict(cacheNames = {ORDER_CACHE_V2, ORDER_LIST_CACHE_V2}, allEntries = true)
     public void deleteOrder(UUID id) {
         OrderEntity order = findOrderById(id);
         orderRepository.delete(order);
